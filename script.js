@@ -1,17 +1,25 @@
 const COLORS = ['#44bcd8','#009c3b','#e04040','#ff8c00','#8b5cf6','#0ea5e9','#ec4899'];
 const FLAG_COLORS = ['#009c3b','#002776','#6B35A8','#e04040','#ff8c00'];
 
+const API_URL = 'https://sheetdb.io/api/v1/poniwriseb5v2';
+
+const GAMES = [
+  { id: 'jogo_1', home: 'Brasil', away: 'Marrocos' },
+  { id: 'jogo_2', home: 'Brasil', away: 'Haiti' },
+  { id: 'jogo_3', home: 'Brasil', away: 'Escócia' },
+];
+
 let players = [
   { name: 'GUSTAVO', role: 'GESTÃO', photo: './assets/gustavo.png', number: 1, flag: '🇧🇷', stars: 5 },
   { name: 'PALAVRO', role: 'MARKETING PRODUTO', photo: './assets/palavro.png', number: 2, flag: '🇧🇷', stars: 5 },
   { name: 'CRISTINA', role: 'MARKETING', photo: './assets/cris.png', number: 3, flag: '🇧🇷', stars: 5 },
-  { name: 'GLAUCIA', role: 'MARKETING', photo: './assets/glaucia.png', number: 4, flag: '🇧🇷', stars: 5 }, 
-  { name: 'NICOLAS', role: 'MARKETING PRODUTO', photo: './assets/nicolas.png', number: 5, flag: '🇧🇷', stars: 5 },
-  { name: 'GUSMÃO', role: 'NEGÓCIOS DIGITAIS', photo: './assets/gusmão.png', number: 6, flag: '🇧🇷', stars: 5 },
-  { name: 'CAMILA', role: 'NEGÓCIOS DIGITAIS', photo: './assets/cami.png', number: 7, flag: '🇧🇷', stars: 5 },
-  { name: 'LILIAN', role: 'NEGÓCIOS DIGITAIS', photo: './assets/lili.png', number: 8, flag: '🇧🇷', stars: 5 },
-  { name: 'DAIANE', role: 'NEGÓCIOS DIGITAIS', photo: './assets/daiane.png', number: 9, flag: '🇧🇷', stars: 5 },
-  { name: 'PRISCILA', role: 'NEGÓCIOS DIGITAIS', photo: './assets/priscila.png', number: 10, flag: '🇧🇷', stars: 5 },
+  { name: 'NICOLAS', role: 'MARKETING PRODUTO', photo: './assets/nicolas.png', number: 4, flag: '🇧🇷', stars: 5 },
+  { name: 'GUSMÃO', role: 'NEGÓCIOS DIGITAIS', photo: './assets/gusmão.png', number: 5, flag: '🇧🇷', stars: 5 },
+  { name: 'CAMILA', role: 'NEGÓCIOS DIGITAIS', photo: './assets/cami.png', number: 6, flag: '🇧🇷', stars: 5 },
+  { name: 'LILIAN', role: 'NEGÓCIOS DIGITAIS', photo: './assets/lili.png', number: 7, flag: '🇧🇷', stars: 5 },
+  { name: 'DAIANE', role: 'NEGÓCIOS DIGITAIS', photo: './assets/daiane.png', number: 8, flag: '🇧🇷', stars: 5 },
+  { name: 'PRISCILA', role: 'NEGÓCIOS DIGITAIS', photo: './assets/priscila.png', number: 9, flag: '🇧🇷', stars: 5 },
+  { name: 'GLAUCIA', role: 'MARKETING', photo: './assets/glaucia.png', number: 10, flag: '🇧🇷', stars: 5 }, 
   { name: 'KEILA', role: 'MARKETING', photo: './assets/keila.png', number: 11, flag: '🇧🇷', stars: 5 },
   { name: 'FABIANA', role: 'MARKETING', photo: './assets/fabiana.png', number: 12, flag: '🇧🇷', stars: 5 },
   { name: 'JULIA', role: 'MARKETING', photo: './assets/julia.png', number: 13, flag: '🇧🇷', stars: 5 },
@@ -22,8 +30,11 @@ let players = [
   { name: 'ALISSON', role: 'MARKETING PRODUTO', photo: './assets/alisson.png', number: 18, flag: '🇧🇷', stars: 5 }
 ];
 
-let revealedCount = 0;
+let revealedCount = parseInt(localStorage.getItem('soprano_revealed_count')) || 0;
 let cardEls = [];
+let currentPlayerIndexForGuesses = null;
+
+let cachedGuesses = [];
 
 function buildGrid() {
   const grid = document.getElementById('stickerGrid');
@@ -35,6 +46,16 @@ function buildGrid() {
     el.className = 'sticker-card';
     el.dataset.index = i;
     el.style.background = COLORS[i % COLORS.length];
+
+    if (i < revealedCount) {
+      el.classList.add('revealed');
+    }
+
+    el.onclick = () => {
+      if (el.classList.contains('revealed')) {
+        openGuessesModal(i);
+      }
+    };
 
     const starsStr = '★'.repeat(p.stars) + '☆'.repeat(5 - p.stars);
     
@@ -53,7 +74,7 @@ function buildGrid() {
         <div class="card-role">${p.role}</div>
       </div>
       <div class="card-footer">
-        <span class="panini-badge">Copa 26</span>
+        <span class="panini-badge">Bolão 26</span>
         <span class="stars">${starsStr}</span>
       </div>`;
 
@@ -70,21 +91,23 @@ function revealNext() {
   const card = cardEls[revealedCount];
   card.classList.add('revealed');
   revealedCount++;
+  
+  localStorage.setItem('soprano_revealed_count', revealedCount);
+  
   updateCounter();
-  
   openRevealModal(card.innerHTML, card.style.background);
-  
-  if (revealedCount >= players.length) {
-    document.getElementById('btnReveal').textContent = '🏆 Álbum Completo!';
-    document.getElementById('btnReveal').classList.add('done');
-    launchConfetti();
-  }
 }
 
 function updateCounter() {
   document.getElementById('counterText').textContent = `${revealedCount} / ${players.length} reveladas`;
   const pct = players.length ? (revealedCount / players.length * 100) : 0;
   document.getElementById('progressFill').style.width = pct + '%';
+
+  const revealSection = document.querySelector('.reveal-section');
+  if (revealedCount >= players.length && revealSection) {
+    const btnReveal = document.getElementById('btnReveal');
+    if (btnReveal) btnReveal.style.display = 'none';
+  }
 }
 
 function openRevealModal(cardHtml, cardBackground) {
@@ -109,11 +132,157 @@ function openRevealModal(cardHtml, cardBackground) {
 }
 
 function closeRevealModal() {
-  const overlay = document.getElementById('revealModalOverlay');
-  overlay.classList.remove('open');
+  document.getElementById('revealModalOverlay').classList.remove('open');
   setTimeout(() => {
-    overlay.style.display = 'none';
+    document.getElementById('revealModalOverlay').style.display = 'none';
   }, 300);
+}
+
+
+async function fetchPalpitesPlanilha() {
+  try {
+    const response = await fetch(API_URL);
+    cachedGuesses = await response.json();
+  } catch (error) {
+    console.error("Erro ao buscar palpites da planilha:", error);
+  }
+}
+
+async function openGuessesModal(playerIndex) {
+  currentPlayerIndexForGuesses = playerIndex;
+  const player = players[playerIndex];
+  
+  document.getElementById('modalPlayerName').textContent = player.name;
+  const container = document.getElementById('gamesContainer');
+  container.innerHTML = `<p style="text-align:center; color:var(--amarelo); font-size:12px;">Carregando palpites da nuvem...</p>`;
+
+  document.getElementById('guessesModalOverlay').classList.add('open');
+
+  await fetchPalpitesPlanilha();
+  container.innerHTML = '';
+
+  GAMES.forEach(game => {
+    const match = cachedGuesses.find(g => g.colaborador === player.name && g.jogo_id === game.id);
+    const homeScore = match ? match.placar_casa : '';
+    const awayScore = match ? match.placar_visitante : '';
+
+    const row = document.createElement('div');
+    row.className = 'game-row';
+    row.innerHTML = `
+      <span class="team-name home">${game.home}</span>
+      <div class="score-vs">
+        <input type="number" class="score-input" id="input_${game.id}_home" value="${homeScore}">
+        <span class="vs-label">X</span>
+        <input type="number" class="score-input" id="input_${game.id}_away" value="${awayScore}">
+      </div>
+      <span class="team-name away">${game.away}</span>
+    `;
+    container.appendChild(row);
+  });
+}
+
+function closeGuessesModal() {
+  document.getElementById('guessesModalOverlay').classList.remove('open');
+  currentPlayerIndexForGuesses = null;
+}
+
+async function salvarPalpites() {
+  if (currentPlayerIndexForGuesses === null) return;
+  const player = players[currentPlayerIndexForGuesses];
+  const btnSave = document.querySelector('#guessesModalOverlay .btn-add');
+  
+  btnSave.textContent = 'Enviando... ⏳';
+  btnSave.disabled = true;
+
+  let novosPalpites = [];
+
+  try {
+    await fetch(`${API_URL}/colaborador/${player.name}`, { method: 'DELETE' });
+  } catch (e) { console.log("Sem palpites antigos para limpar."); }
+
+  GAMES.forEach(game => {
+    const homeVal = document.getElementById(`input_${game.id}_home`).value.trim();
+    const awayVal = document.getElementById(`input_${game.id}_away`).value.trim();
+
+    if (homeVal !== '' || awayVal !== '') {
+      novosPalpites.push({
+        colaborador: player.name,
+        jogo_id: game.id,
+        placar_casa: homeVal,
+        placar_visitante: awayVal
+      });
+    }
+  });
+
+  if (novosPalpites.length > 0) {
+    try {
+      await fetch(API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(novosPalpites)
+      });
+      alert(`Palpites de ${player.name} atualizados na planilha! 🇧🇷`);
+    } catch (error) {
+      alert("Erro ao salvar na planilha. Tente novamente.");
+    }
+  }
+
+  btnSave.textContent = 'Salvar 🏆';
+  btnSave.disabled = false;
+  closeGuessesModal();
+}
+
+async function openDashboardModal() {
+  const container = document.getElementById('dashboardTablesContainer');
+  container.innerHTML = `<p style="text-align:center; color:var(--amarelo);">Buscando banco de dados da planilha... ⚽</p>`;
+  document.getElementById('dashboardModalOverlay').classList.add('open');
+
+  await fetchPalpitesPlanilha();
+  container.innerHTML = '';
+
+  GAMES.forEach(game => {
+    const gameBlock = document.createElement('div');
+    gameBlock.className = 'dashboard-game-block';
+    
+    let rowsHtml = '';
+    
+    const jogoPalpites = cachedGuesses.filter(g => g.jogo_id === game.id);
+
+    jogoPalpites.forEach(match => {
+      rowsHtml += `
+        <tr>
+          <td style="font-weight: 600; width: 40%;">${match.colaborador}</td>
+          <td class="dashboard-score-cell" style="text-align: center; width: 60%;">
+            ${match.placar_casa} x ${match.placar_visitante}
+          </td>
+        </tr>
+      `;
+    });
+
+    if (rowsHtml === '') {
+      rowsHtml = `<tr><td colspan="2" style="color: rgba(255,255,255,0.3); text-align: center; padding: 12px;">Nenhum palpite registrado para este jogo.</td></tr>`;
+    }
+
+    gameBlock.innerHTML = `
+      <div class="dashboard-game-title">⚽ ${game.home} x ${game.away}</div>
+      <table class="dashboard-table">
+        <thead>
+          <tr>
+            <th style="text-align: left;">Colaborador</th>
+            <th style="text-align: center;">Palpite</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${rowsHtml}
+        </tbody>
+      </table>
+    `;
+    container.appendChild(gameBlock);
+  });
+}
+
+function closeDashboardModal() {
+  document.getElementById('dashboardModalOverlay').classList.remove('open');
 }
 
 function burstCenter() {
@@ -128,16 +297,9 @@ function burstCenter() {
     const velocity = 6 + Math.random() * 12;
     
     s.style.cssText = `
-      left: ${cx}px;
-      top: ${cy}px;
-      background: ${colors[i % colors.length]};
-      width: ${8 + Math.random() * 8}px;
-      height: ${10 + Math.random() * 10}px;
-      position: fixed;
-      transform: translate(-50%, -50%);
+      left: ${cx}px; top: ${cy}px; background: ${colors[i % colors.length]}; width: ${8 + Math.random() * 8}px; height: ${10 + Math.random() * 10}px; position: fixed; transform: translate(-50%, -50%);
       animation: packOpen 1s cubic-bezier(0.1, 0.8, 0.3, 1) forwards;
-      --x: ${Math.cos(angle) * velocity * 15}px;
-      --y: ${Math.sin(angle) * velocity * 15}px;
+      --x: ${Math.cos(angle) * velocity * 15}px; --y: ${Math.sin(angle) * velocity * 15}px;
     `;
     wrap.appendChild(s);
     setTimeout(() => s.remove(), 1000);
@@ -150,14 +312,7 @@ function launchConfetti() {
   for (let i = 0; i < 60; i++) {
     const s = document.createElement('span');
     const size = 8 + Math.random() * 10;
-    s.style.cssText = `
-      left:${Math.random()*100}%;
-      top:-20px;
-      background:${colors[Math.floor(Math.random()*colors.length)]};
-      width:${size}px; height:${size*1.4}px;
-      animation-duration:${2+Math.random()*3}s;
-      animation-delay:${Math.random()*2}s;
-    `;
+    s.style.cssText = `left:${Math.random()*100}%; top:-20px; background:${colors[Math.floor(Math.random()*colors.length)]}; width:${size}px; height:${size*1.4}px; animation-duration:${2+Math.random()*3}s; animation-delay:${Math.random()*2}s;`;
     wrap.appendChild(s);
     setTimeout(() => s.remove(), 6000);
   }
@@ -168,15 +323,7 @@ function spawnAmbient() {
   const colors = ['#ffdf00','#009c3b','#ffffff','#002776'];
   const s = document.createElement('span');
   const size = 6 + Math.random() * 8;
-  s.style.cssText = `
-    left:${Math.random()*100}%;
-    top:-20px;
-    background:${colors[Math.floor(Math.random()*colors.length)]};
-    width:${size}px; height:${size*1.4}px;
-    animation-duration:${5+Math.random()*5}s;
-    animation-delay:0s;
-    opacity:0.4;
-  `;
+  s.style.cssText = `left:${Math.random()*100}%; top:-20px; background:${colors[Math.floor(Math.random()*colors.length)]}; width:${size}px; height:${size*1.4}px; animation-duration:${5+Math.random()*5}s; animation-delay:0s; opacity:0.4;`;
   wrap.appendChild(s);
   setTimeout(() => s.remove(), 12000);
 }
