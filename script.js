@@ -204,12 +204,12 @@ async function salvarPalpites() {
     const homeVal = document.getElementById(`input_${game.id}_home`).value.trim();
     const awayVal = document.getElementById(`input_${game.id}_away`).value.trim();
 
-    if (homeVal !== '' || awayVal !== '') {
+    if (homeVal !== '' && awayVal !== '') {
       novosPalpites.push({
         colaborador: player.name,
         jogo_id: game.id,
-        placar_casa: homeVal,
-        placar_visitante: awayVal
+        placar_casa: parseInt(homeVal, 10),
+        placar_visitante: parseInt(awayVal, 10)
       });
     }
   });
@@ -249,11 +249,14 @@ async function openDashboardModal() {
     const jogoPalpites = cachedGuesses.filter(g => g.jogo_id === game.id);
 
     jogoPalpites.forEach(match => {
+      const homeScore = match.placar_casa !== undefined && match.placar_casa !== null ? match.placar_casa : 0;
+      const awayScore = match.placar_visitante !== undefined && match.placar_visitante !== null ? match.placar_visitante : 0;
+
       rowsHtml += `
         <tr>
           <td style="font-weight: 600; width: 40%;">${match.colaborador}</td>
           <td class="dashboard-score-cell" style="text-align: center; width: 60%;">
-            ${match.placar_casa} x ${match.placar_visitante}
+            ${homeScore} x ${awayScore}
           </td>
         </tr>
       `;
