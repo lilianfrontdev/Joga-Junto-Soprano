@@ -8,8 +8,8 @@ O projeto transforma os colaboradores em figurinhas colecionáveis e conecta tod
 
 ## 🚀 Funcionalidades Principais e Fluxo de UX
 
-1. **Álbum de Figurinhas Persistente:** O grid inicial renderiza os 18 cards de forma opaca (cinza). Ao clicar em **⚡ Revelar Próxima**, o sistema dispara uma animação de abertura de pacotes com um pop-up centralizado e explosão de confetes.
-2. **Revelação Única:** O progresso do álbum é salvo no `localStorage`. Assim que o usuário revela todos os 18 membros do time, o painel de revelação se oculta automaticamente ao atualizar a página, mantendo o álbum completo visível permanentemente.
+1. **Álbum de Figurinhas Persistente:** O grid inicial renderiza os cards de forma opaca (cinza). Ao clicar em **⚡ Revelar Próxima**, o sistema dispara uma animação de abertura de pacotes com um pop-up centralizado e explosão de confetes.
+2. **Revelação Única:** O progresso do álbum é salvo no `localStorage`. Assim que o usuário revela todos os membros do time, o painel de revelação se oculta automaticamente ao atualizar a página, mantendo o álbum completo visível permanentemente.
 3. **Palpites Interativos (Bolão):** Ao clicar em qualquer figurinha já revelada no grid, um modal dinâmico se abre exibindo os confrontos da Copa. O colaborador pode inserir ou atualizar seus placares facilmente.
 4. **Painel Geral em Tempo Real:** Substituindo o antigo armazenamento local, o botão **📊 Ver Palpites Gerais** faz uma requisição ao banco de dados na nuvem e monta tabelas comparativas para cada confronto, permitindo o acompanhamento coletivo das apostas.
 
