@@ -7,6 +7,7 @@ const GAMES = [
   { id: 'jogo_1', home: 'Brasil', away: 'Marrocos' },
   { id: 'jogo_2', home: 'Brasil', away: 'Haiti' },
   { id: 'jogo_3', home: 'Brasil', away: 'Escócia' },
+  { id: 'jogo_4', home: 'Brasil', away: 'Japão' },
 ];
 
 let players = [
